@@ -1,0 +1,2262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0A0D0F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PREFLIGHT">
+<title>PREFLIGHT — sUAS Compliance</title>
+
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%230A0D0F'/><g stroke='%235DCD7B' stroke-width='6' fill='none'><circle cx='90' cy='90' r='62'/><circle cx='90' cy='90' r='32'/><path d='M90 18v144M18 90h144'/></g><circle cx='90' cy='90' r='6' fill='%235DCD7B'/></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230A0D0F'/><g stroke='%235DCD7B' stroke-width='2' fill='none'><circle cx='16' cy='16' r='10'/><path d='M16 4v24M4 16h24'/></g></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg:            #0A0D0F;
+    --bg-grid:       rgba(255,255,255,0.018);
+    --surface:       #131719;
+    --surface-2:     #1A2024;
+    --surface-3:     #232A30;
+    --border:        #2A3138;
+    --border-bright: #3A434C;
+    --text:          #E8EAED;
+    --text-dim:      #8B949E;
+    --text-mute:     #586069;
+    --green:         #5DCD7B;
+    --green-dim:     #2F6B40;
+    --amber:         #F2A93B;
+    --amber-dim:     #6B4A19;
+    --red:           #E55757;
+    --red-dim:       #6B2828;
+    --cyan:          #5BC0DE;
+    --shadow-deep:   0 8px 32px rgba(0,0,0,0.6);
+
+    --font-display:  "Saira Condensed", "Oswald", "Arial Narrow", sans-serif;
+    --font-body:     "IBM Plex Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --font-mono:     "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    background-image:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.45;
+    min-height: 100vh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    overscroll-behavior-y: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ HEADER ============ */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: linear-gradient(180deg, rgba(10,13,15,0.98) 0%, rgba(10,13,15,0.94) 100%);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px 8px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+  }
+  .topbar-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 9px;
+    cursor: pointer; user-select: none;
+  }
+  .brand-mark {
+    width: 26px; height: 26px;
+    border: 1.5px solid var(--green);
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .brand-mark::before, .brand-mark::after {
+    content: ""; position: absolute; background: var(--green);
+  }
+  .brand-mark::before { left: 50%; top: 2px; bottom: 2px; width: 1.5px; transform: translateX(-50%); }
+  .brand-mark::after  { top: 50%; left: 2px; right: 2px; height: 1.5px; transform: translateY(-50%); }
+  .brand-text {
+    font-family: var(--font-display);
+    font-weight: 700; font-size: 19px; letter-spacing: 0.14em;
+    line-height: 1;
+  }
+  .brand-sub {
+    font-family: var(--font-mono); font-size: 9.5px;
+    color: var(--text-mute); letter-spacing: 0.18em;
+    margin-top: 2px;
+  }
+
+  .clock {
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--green);
+    text-align: right;
+    line-height: 1.25;
+  }
+  .clock .utc { color: var(--text-mute); font-size: 10px; }
+
+  /* TABS */
+  .tabs {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    margin-top: 10px;
+    gap: 2px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    padding: 2px;
+  }
+  .tab {
+    background: var(--surface);
+    border: 0;
+    color: var(--text-dim);
+    font-family: var(--font-display);
+    font-weight: 600; font-size: 12.5px; letter-spacing: 0.14em;
+    padding: 9px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab.active {
+    background: var(--green);
+    color: var(--bg);
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);
+  }
+  .tab .tab-dot {
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: var(--red);
+    margin-left: 4px; vertical-align: middle;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+
+  /* ============ MAIN ============ */
+  main { padding: 16px 14px 100px; max-width: 720px; margin: 0 auto; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 14px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; user-select: none;
+  }
+  .panel-head[data-collapsed="true"] { border-bottom: none; }
+  .panel-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-mute);
+    letter-spacing: 0.08em;
+  }
+  .panel-title {
+    flex: 1;
+    font-family: var(--font-display);
+    font-weight: 600; font-size: 15px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+  }
+  .panel-status {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-mute);
+    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border: 1px solid var(--border-bright);
+    border-radius: 3px;
+  }
+  .panel-status.ok { color: var(--green); border-color: var(--green-dim); }
+  .panel-status.warn { color: var(--amber); border-color: var(--amber-dim); }
+  .panel-status.fail { color: var(--red); border-color: var(--red-dim); }
+  .panel-chev {
+    color: var(--text-mute); font-size: 14px;
+    transition: transform 0.2s;
+  }
+  .panel-head[data-collapsed="true"] .panel-chev {
+    transform: rotate(-90deg);
+  }
+  .panel-body {
+    padding: 6px 0;
+  }
+  .panel-head[data-collapsed="true"] + .panel-body { display: none; }
+
+  /* CHECK ROWS */
+  .check {
+    display: flex; align-items: flex-start; gap: 11px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(42, 49, 56, 0.5);
+    cursor: pointer; user-select: none;
+    transition: background 0.1s;
+  }
+  .check:last-child { border-bottom: none; }
+  .check:active { background: var(--surface-2); }
+  .check input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border: 1.5px solid var(--border-bright);
+    border-radius: 3px;
+    margin: 0; flex-shrink: 0;
+    background: var(--bg);
+    position: relative;
+    cursor: pointer;
+    margin-top: 1px;
+    transition: all 0.15s;
+  }
+  .check input[type="checkbox"]:checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .check input[type="checkbox"]:checked::after {
+    content: ""; position: absolute;
+    left: 6px; top: 2px;
+    width: 6px; height: 11px;
+    border: solid var(--bg);
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+  }
+  .check-label {
+    flex: 1;
+    font-size: 14.5px;
+    line-height: 1.35;
+  }
+  .check-sub {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-mute);
+    margin-top: 2px;
+    font-family: var(--font-mono);
+  }
+  .check.required .check-label::after {
+    content: "•";
+    color: var(--amber);
+    margin-left: 6px;
+    font-weight: bold;
+  }
+  .check.critical .check-label::after {
+    content: "•";
+    color: var(--red);
+    margin-left: 6px;
+    font-weight: bold;
+  }
+
+  /* SECTION SUBHEADERS */
+  .sub {
+    padding: 8px 14px 4px;
+    font-family: var(--font-mono); font-size: 9.5px;
+    letter-spacing: 0.16em;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(42, 49, 56, 0.4);
+    background: rgba(0,0,0,0.15);
+  }
+
+  /* NOTES */
+  textarea, input[type="text"], select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 9px 11px;
+    resize: vertical;
+  }
+  textarea:focus, input:focus, select:focus {
+    outline: none; border-color: var(--green-dim);
+  }
+  textarea { min-height: 70px; font-family: var(--font-mono); font-size: 12.5px; }
+
+  .field { padding: 12px 14px; }
+  .field label {
+    display: block;
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-mute);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 7px;
+    border: 1px solid var(--border-bright);
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    padding: 11px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--green); color: var(--bg);
+    border-color: var(--green);
+  }
+  .btn-primary:disabled {
+    background: var(--surface-2);
+    color: var(--text-mute);
+    border-color: var(--border);
+    cursor: not-allowed;
+  }
+  .btn-warn { background: var(--amber); color: var(--bg); border-color: var(--amber); }
+  .btn-danger { background: var(--red); color: white; border-color: var(--red); }
+  .btn-ghost { background: transparent; border-color: var(--border); color: var(--text-dim); }
+  .btn-small { font-size: 11px; padding: 8px 12px; }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row .btn { flex: 1; }
+
+  /* BIG ACTION */
+  .action-bar {
+    position: sticky; bottom: 0; z-index: 50;
+    background: linear-gradient(180deg, rgba(10,13,15,0) 0%, rgba(10,13,15,0.95) 25%, var(--bg) 100%);
+    padding: 24px 14px calc(16px + env(safe-area-inset-bottom));
+    margin: 24px -14px -100px;
+  }
+  .big-action {
+    width: 100%;
+    height: 64px;
+    background: var(--green);
+    color: var(--bg);
+    border: none;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0.18em;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(93, 205, 123, 0.25);
+  }
+  .big-action:disabled {
+    background: var(--surface-2);
+    color: var(--text-mute);
+    box-shadow: none;
+  }
+  .big-action::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  .big-action:disabled::after { border-color: var(--border); }
+
+  /* FLIGHT MODE */
+  .flight-hero {
+    text-align: center;
+    padding: 30px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .flight-hero::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(93,205,123,0.08), transparent 60%);
+    pointer-events: none;
+  }
+  .flight-label {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-mute);
+    margin-bottom: 8px;
+  }
+  .flight-time {
+    font-family: var(--font-mono);
+    font-size: 56px;
+    font-weight: 500;
+    color: var(--green);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 24px rgba(93,205,123,0.3);
+    font-variant-numeric: tabular-nums;
+  }
+  .flight-meta {
+    display: flex; justify-content: center; gap: 24px;
+    margin-top: 14px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+  }
+  .flight-meta .ok { color: var(--green); }
+
+  /* LOG */
+  .log-empty {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--text-mute);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+  .log-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .log-item-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 13px;
+    cursor: pointer;
+  }
+  .log-item.incident { border-color: var(--red-dim); }
+  .log-item.incident .log-item-head { background: rgba(229, 87, 87, 0.06); }
+  .log-tag {
+    font-family: var(--font-mono); font-size: 9.5px;
+    letter-spacing: 0.1em;
+    padding: 2px 6px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  .log-tag.ok { background: var(--green-dim); color: var(--green); }
+  .log-tag.incident { background: var(--red-dim); color: var(--red); }
+  .log-meta {
+    flex: 1;
+    font-family: var(--font-mono); font-size: 11.5px;
+    color: var(--text-dim);
+  }
+  .log-meta .log-date { color: var(--text); font-weight: 500; }
+  .log-detail {
+    padding: 0 13px 12px;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .log-detail dt { color: var(--text-mute); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 8px; }
+  .log-detail dd { margin: 2px 0 0; color: var(--text); }
+  .log-detail .actions { margin-top: 10px; display: flex; gap: 6px; }
+
+  /* INFO TAB */
+  .cert-card {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    padding: 18px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cert-card::before {
+    content: ""; position: absolute;
+    top: -40px; right: -40px;
+    width: 140px; height: 140px;
+    background: radial-gradient(circle, rgba(91,192,222,0.12), transparent 70%);
+  }
+  .cert-banner {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.16em;
+    color: var(--cyan);
+    margin-bottom: 14px;
+  }
+  .cert-banner::before {
+    content: "★"; font-size: 11px;
+  }
+  .cert-row {
+    display: flex; justify-content: space-between; gap: 14px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(42, 49, 56, 0.5);
+    font-size: 13px;
+  }
+  .cert-row:last-child { border-bottom: none; }
+  .cert-row dt {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-mute); letter-spacing: 0.1em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    align-self: center;
+  }
+  .cert-row dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    text-align: right;
+    word-break: break-all;
+  }
+  .cert-row dd.green { color: var(--green); font-weight: 600; }
+
+  .quickref {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .quickref h3 {
+    margin: 0 0 10px;
+    font-family: var(--font-display);
+    font-size: 14px; letter-spacing: 0.12em;
+    color: var(--amber);
+    text-transform: uppercase;
+  }
+  .quickref ul {
+    list-style: none; padding: 0; margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .quickref li {
+    padding: 4px 0 4px 18px;
+    position: relative;
+    color: var(--text-dim);
+  }
+  .quickref li::before {
+    content: "›"; position: absolute; left: 0;
+    color: var(--green); font-family: var(--font-mono);
+  }
+  .quickref strong { color: var(--text); font-weight: 600; }
+
+  /* ALERT */
+  .alert {
+    padding: 12px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin: 14px;
+    border-left: 3px solid;
+    line-height: 1.45;
+  }
+  .alert.amber { background: rgba(242, 169, 59, 0.08); border-left-color: var(--amber); color: #F5C679; }
+  .alert.red   { background: rgba(229, 87, 87, 0.08); border-left-color: var(--red); color: #F08E8E; }
+  .alert.info  { background: rgba(91, 192, 222, 0.06); border-left-color: var(--cyan); color: #97D4E8; }
+  .alert.green { background: rgba(93, 205, 123, 0.06); border-left-color: var(--green); color: var(--green); }
+
+  /* MODAL */
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    width: 100%; max-width: 480px;
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: var(--shadow-deep);
+  }
+  .modal-head {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .modal-body { padding: 14px 16px; }
+  .modal-foot { padding: 12px 16px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+  .close-x { background: none; border: none; color: var(--text-dim); font-size: 22px; cursor: pointer; }
+
+  /* AIRSPACE CHECK */
+  .airspace-check {
+    margin: 12px 14px 8px;
+    border: 1px solid var(--border-bright);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .ac-head {
+    background: var(--surface-2);
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ac-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    color: var(--cyan);
+  }
+  .ac-sub {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-mute);
+    margin-top: 2px;
+    letter-spacing: 0.06em;
+  }
+  .ac-body { padding: 12px; }
+  .ac-step {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+    padding: 3px 0;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .ac-step.done { color: var(--green); }
+  .ac-step.fail { color: var(--red); }
+  .ac-step .ac-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--text-mute);
+    flex-shrink: 0;
+  }
+  .ac-step.done .ac-dot { background: var(--green); }
+  .ac-step.fail .ac-dot { background: var(--red); }
+  .ac-step.spin .ac-dot {
+    background: transparent;
+    border: 1.5px solid var(--amber);
+    border-top-color: transparent;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .ac-verdict {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 4px;
+    border-left: 3px solid;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .ac-verdict.pass {
+    background: rgba(93,205,123,0.07);
+    border-left-color: var(--green);
+    color: #B8E6C5;
+  }
+  .ac-verdict.warn {
+    background: rgba(242,169,59,0.07);
+    border-left-color: var(--amber);
+    color: #F5C679;
+  }
+  .ac-verdict.fail {
+    background: rgba(229,87,87,0.07);
+    border-left-color: var(--red);
+    color: #F08E8E;
+  }
+  .ac-verdict-head {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .ac-verdict dl { margin: 8px 0 0; font-size: 11.5px; }
+  .ac-verdict dt {
+    color: var(--text-mute);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 5px;
+  }
+  .ac-verdict dd { margin: 1px 0 0; color: var(--text); word-break: break-all; }
+  .ac-verdict .timestamp {
+    margin-top: 10px;
+    font-size: 10px;
+    color: var(--text-mute);
+    letter-spacing: 0.1em;
+  }
+
+  /* AUTO-ONLY checks */
+  .check.auto-only {
+    background: rgba(91,192,222,0.04);
+    cursor: default;
+  }
+  .check.auto-only:active { background: rgba(91,192,222,0.04); }
+  .check.auto-only::before {
+    content: "FAA";
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--cyan);
+    background: rgba(91,192,222,0.12);
+    padding: 2px 5px;
+    border-radius: 2px;
+    align-self: center;
+    margin-right: -4px;
+  }
+  .check.auto-only input[type="checkbox"] {
+    border-color: var(--cyan);
+    opacity: 0.7;
+  }
+  .check.auto-only input[type="checkbox"]:checked {
+    background: var(--cyan);
+    border-color: var(--cyan);
+    opacity: 1;
+  }
+  .check.auto-only input[type="checkbox"]:checked::after {
+    border-color: var(--bg);
+  }
+  .check.auto-only .check-label {
+    color: var(--text-dim);
+  }
+  .check.auto-only input[type="checkbox"]:checked ~ .check-label {
+    color: var(--text);
+  }
+
+  /* SETUP WIZARD */
+  .wizard {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    width: 100%; max-width: 440px;
+    box-shadow: var(--shadow-deep);
+    overflow: hidden;
+  }
+  .wizard-banner {
+    background: var(--green);
+    color: var(--bg);
+    padding: 16px 18px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: 0.14em;
+  }
+  .wizard-body { padding: 18px; }
+  .wizard-body .field { padding: 0 0 12px; }
+  .wizard-body .field label { color: var(--text); font-size: 11px; }
+  .wizard-body p {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-dim);
+    margin: 0 0 16px;
+  }
+  .wizard-foot {
+    padding: 12px 18px 18px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .ext-link {
+    color: var(--cyan);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    border-bottom: 1px dotted var(--cyan);
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 0 14px 14px;
+  }
+  .stat {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--green);
+    line-height: 1;
+  }
+  .stat-num.amber { color: var(--amber); }
+  .stat-num.red   { color: var(--red); }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-mute);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .hidden { display: none !important; }
+
+  .footer-note {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--text-mute);
+    letter-spacing: 0.14em;
+    padding: 16px 14px 8px;
+    text-transform: uppercase;
+  }
+
+  /* Make sure long words don't break layout */
+  .panel, .modal { overflow-wrap: break-word; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-row">
+    <div class="brand" id="brandTap">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-text">PREFLIGHT</div>
+        <div class="brand-sub">sUAS · &lt;250G · RECREATIONAL</div>
+      </div>
+    </div>
+    <div class="clock">
+      <div id="clockLocal">--:--:--</div>
+      <div class="utc" id="clockUtc">--:-- Z</div>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="preflight">CHECKLIST</button>
+    <button class="tab" data-tab="flight">FLIGHT</button>
+    <button class="tab" data-tab="log">LOG</button>
+    <button class="tab" data-tab="info">INFO</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ================= TAB: PREFLIGHT ================= -->
+<section id="tab-preflight">
+
+  <div class="alert info" id="incomplete-banner" style="display:none">
+    Complete required items <strong>(orange)</strong> and critical items <strong>(red)</strong> before flight authorization.
+  </div>
+
+  <!-- 1. PILOT FITNESS -->
+  <div class="panel" data-section="pilot">
+    <div class="panel-head" onclick="togglePanel(this)">
+      <span class="panel-num">01</span>
+      <span class="panel-title">Pilot Fitness · IMSAFE</span>
+      <span class="panel-status" data-status>PEND</span>
+      <span class="panel-chev">▾</span>
+    </div>
+    <div class="panel-body">
+      <label class="check critical"><input type="checkbox" data-req><span class="check-label">Illness — no symptoms affecting flight ops<span class="check-sub">I — illness</span></span></label>
+      <label class="check critical"><input type="checkbox" data-req><span class="check-label">Medication — none impairing<span class="check-sub">M — medication</span></span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Stress — not impaired<span class="check-sub">S — stress</span></span></label>
+      <label class="check critical"><input type="checkbox" data-req><span class="check-label">Alcohol — none in last 8 hours<span class="check-sub">A — alcohol</span></span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Fatigue — adequate rest<span class="check-sub">F — fatigue</span></span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Emotion — clear-headed<span class="check-sub">E — emotion</span></span></label>
+    </div>
+  </div>
+
+  <!-- 2. POWER -->
+  <div class="panel" data-section="power">
+    <div class="panel-head" onclick="togglePanel(this)">
+      <span class="panel-num">02</span>
+      <span class="panel-title">Power Systems</span>
+      <span class="panel-status" data-status>PEND</span>
+      <span class="panel-chev">▾</span>
+    </div>
+    <div class="panel-body">
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Model battery charged & undamaged</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Transmitter battery charged</span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">FPV goggle batteries charged<span class="check-sub">if applicable</span></span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">No swelling, leaking, or damaged cells</span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">Battery strap & retention intact</span></label>
+    </div>
+  </div>
+
+  <!-- 3. AIRFRAME -->
+  <div class="panel" data-section="airframe">
+    <div class="panel-head" onclick="togglePanel(this)">
+      <span class="panel-num">03</span>
+      <span class="panel-title">Airframe Inspection</span>
+      <span class="panel-status" data-status>PEND</span>
+      <span class="panel-chev">▾</span>
+    </div>
+    <div class="panel-body">
+      <div class="sub">Structure</div>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Propellers REMOVED for inspection</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">No frame damage or stress cracks</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Control surfaces — no defect, free motion</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Control horns secure & undamaged</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Control rods straight & connected</span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">Motor mount intact</span></label>
+      <div class="sub">Wiring & Hardware</div>
+      <label class="check"><input type="checkbox"><span class="check-label">No wire wear or chafing</span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">Zip ties intact</span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">All screws & nuts tight</span></label>
+    </div>
+  </div>
+
+  <!-- 4. CONTROL & COMMS -->
+  <div class="panel" data-section="control">
+    <div class="panel-head" onclick="togglePanel(this)">
+      <span class="panel-num">04</span>
+      <span class="panel-title">Control · Comms</span>
+      <span class="panel-status" data-status>PEND</span>
+      <span class="panel-chev">▾</span>
+    </div>
+    <div class="panel-body">
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Model power-up initialization OK</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Transmitter powered & bound</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Range check passed</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Servo response correct (all axes)</span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">Telemetry nominal<span class="check-sub">if applicable</span></span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">Receiver antennas positioned correctly</span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">Switch functions verified</span></label>
+    </div>
+  </div>
+
+  <!-- 5. PROPULSION -->
+  <div class="panel" data-section="prop">
+    <div class="panel-head" onclick="togglePanel(this)">
+      <span class="panel-num">05</span>
+      <span class="panel-title">Propulsion · Final</span>
+      <span class="panel-status" data-status>PEND</span>
+      <span class="panel-chev">▾</span>
+    </div>
+    <div class="panel-body">
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Motors spin freely (no bind, no grind)</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Motor direction verified</span></label>
+      <label class="check critical"><input type="checkbox" data-req><span class="check-label">Propellers INSTALLED & tightened</span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">Prop saver / o-ring condition OK<span class="check-sub">if applicable</span></span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">No prop damage, nicks, or imbalance</span></label>
+    </div>
+  </div>
+
+  <!-- 6. AIRSPACE -->
+  <div class="panel" data-section="airspace">
+    <div class="panel-head" onclick="togglePanel(this)">
+      <span class="panel-num">06</span>
+      <span class="panel-title">Airspace · Environment</span>
+      <span class="panel-status" data-status>PEND</span>
+      <span class="panel-chev">▾</span>
+    </div>
+    <div class="panel-body">
+
+      <!-- AUTOMATED FAA CHECK -->
+      <div class="airspace-check" id="airspaceCheck">
+        <div class="ac-head">
+          <div class="ac-title">AUTOMATED FAA CHECK</div>
+          <div class="ac-sub">Required · queries FAA UAS Facility Map + NSUFR</div>
+        </div>
+        <div class="ac-body" id="acBody">
+          <button class="btn btn-primary" onclick="runAirspaceCheck()" id="acRunBtn">
+            ▶ RUN AIRSPACE CHECK
+          </button>
+        </div>
+      </div>
+
+      <div style="padding: 4px 14px 6px;">
+        <a href="https://avision.io/" target="_blank" rel="noopener" class="btn btn-ghost btn-small" id="avisionBtn" onclick="openAvision(event)">
+          Open Avision · for LAANC / second check
+        </a>
+      </div>
+
+      <label class="check critical auto-only" data-auto="airspaceClear"><input type="checkbox" data-req disabled><span class="check-label">FAA airspace check — clear<span class="check-sub">set by automated check</span></span></label>
+      <label class="check critical auto-only" data-auto="classG"><input type="checkbox" data-req disabled><span class="check-label">Class G (or LAANC authorized)<span class="check-sub">set by automated check</span></span></label>
+      <label class="check critical"><input type="checkbox" data-req><span class="check-label">Flight planned ≤400 ft AGL</span></label>
+      <label class="check critical"><input type="checkbox" data-req><span class="check-label">VLOS achievable for entire flight</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">No flight directly over people</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Will yield to all manned aircraft</span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Weather acceptable for the aircraft</span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">Spotter/VO present<span class="check-sub">required for FPV</span></span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">Take-off & landing area adequate</span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">No TFRs / NOTAMs affecting site<span class="check-sub">verify in Avision — TFRs change minute-to-minute</span></span></label>
+    </div>
+  </div>
+
+  <!-- 7. DOCS -->
+  <div class="panel" data-section="docs">
+    <div class="panel-head" onclick="togglePanel(this)">
+      <span class="panel-num">07</span>
+      <span class="panel-title">Documents · Compliance</span>
+      <span class="panel-status" data-status>PEND</span>
+      <span class="panel-chev">▾</span>
+    </div>
+    <div class="panel-body">
+      <label class="check required"><input type="checkbox" data-req checked><span class="check-label">TRUST certificate accessible<span class="check-sub" id="trust-sub">view in INFO tab</span></span></label>
+      <label class="check required"><input type="checkbox" data-req><span class="check-label">Aircraft &lt;250 g confirmed<span class="check-sub">no FAA registration required for recreational</span></span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">Flying for recreational/educational purposes</span></label>
+      <label class="check"><input type="checkbox"><span class="check-label">Operating per FTCA / CBO safety guidelines</span></label>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="panel">
+    <div class="panel-head" onclick="togglePanel(this)" data-collapsed="true">
+      <span class="panel-num">08</span>
+      <span class="panel-title">Pre-flight Notes</span>
+      <span class="panel-status">OPT</span>
+      <span class="panel-chev">▾</span>
+    </div>
+    <div class="panel-body">
+      <div class="field">
+        <label for="preNotes">Location, wind, intent, anomalies</label>
+        <textarea id="preNotes" placeholder="e.g. site, wind 6kt 220, planned circuits east of road, two onlookers behind line..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="stat-num" id="stat-complete">0</div>
+      <div class="stat-label">complete</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num amber" id="stat-required">0</div>
+      <div class="stat-label">req remain</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num red" id="stat-critical">0</div>
+      <div class="stat-label">crit remain</div>
+    </div>
+  </div>
+
+  <div class="btn-row" style="padding: 0 0 8px;">
+    <button class="btn btn-ghost btn-small" onclick="resetChecklist()">RESET</button>
+    <button class="btn btn-ghost btn-small" onclick="expandAll()">EXPAND ALL</button>
+    <button class="btn btn-ghost btn-small" onclick="collapseAll()">COLLAPSE</button>
+  </div>
+
+  <div class="action-bar">
+    <button class="big-action" id="beginBtn" disabled onclick="beginFlight()">
+      BEGIN FLIGHT
+    </button>
+  </div>
+</section>
+
+<!-- ================= TAB: FLIGHT ================= -->
+<section id="tab-flight" class="hidden">
+
+  <div id="flight-pre" style="text-align:center; padding: 60px 20px;">
+    <div style="font-family: var(--font-mono); font-size: 12px; color: var(--text-mute); letter-spacing: 0.16em;">
+      NO ACTIVE FLIGHT
+    </div>
+    <div style="margin-top: 12px; color: var(--text-dim); font-size: 13.5px;">
+      Complete the checklist and tap <strong style="color: var(--green);">BEGIN FLIGHT</strong> to start a session.
+    </div>
+  </div>
+
+  <div id="flight-active" class="hidden">
+    <div id="restoredBanner" class="alert amber hidden" style="margin: 0 0 14px;">
+      <strong>Flight restored.</strong> The browser tab was suspended, but the flight kept running in the background and timing is accurate.
+    </div>
+    <div class="flight-hero">
+      <div class="flight-label">ELAPSED TIME</div>
+      <div class="flight-time" id="flightTime">00:00:00</div>
+      <div class="flight-meta">
+        <div>STARTED <span class="ok" id="flightStarted">--:--</span></div>
+        <div>STATUS <span class="ok">ACTIVE</span></div>
+      </div>
+    </div>
+
+    <div class="alert green" style="margin: 0 0 14px;">
+      <strong>Reminders during flight:</strong> Maintain VLOS · stay ≤400 ft AGL · yield to manned aircraft · no flight over people · if emergency, land immediately or divert from people/property.
+    </div>
+
+    <button class="btn btn-warn" onclick="declareIncident()" style="margin-bottom: 10px;">
+      ⚠ DECLARE INCIDENT
+    </button>
+
+    <button class="btn btn-primary" onclick="endFlight()">
+      END FLIGHT · LAND COMPLETE
+    </button>
+
+    <div class="quickref" style="margin-top: 14px;">
+      <h3>Emergency Procedure</h3>
+      <ul>
+        <li><strong>Land immediately</strong> if safe to do so.</li>
+        <li>Otherwise <strong>divert from people, vehicles, structures</strong>.</li>
+        <li>If lost link: wait for failsafe / return-to-home.</li>
+        <li>After incident: tap DECLARE INCIDENT to flag this flight.</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+<!-- ================= TAB: LOG ================= -->
+<section id="tab-log" class="hidden">
+
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="stat-num" id="log-stat-total">0</div>
+      <div class="stat-label">flights · 10d</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num amber" id="log-stat-hours">0</div>
+      <div class="stat-label">min total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num red" id="log-stat-incidents">0</div>
+      <div class="stat-label">incidents</div>
+    </div>
+  </div>
+
+  <div id="log-list">
+    <div class="log-empty">NO FLIGHTS LOGGED</div>
+  </div>
+
+  <div class="btn-row" style="margin-top: 16px;">
+    <button class="btn btn-ghost btn-small" onclick="exportAll()">EXPORT ALL JSON</button>
+    <button class="btn btn-ghost btn-small" onclick="confirmClearLog()">CLEAR NON-INCIDENT</button>
+  </div>
+
+  <div class="alert info" style="margin: 16px 0 0;">
+    Non-incident flights auto-purge after <strong>10 days</strong>. Incident flights are retained until you manually clear them, and can be exported as evidence.
+  </div>
+</section>
+
+<!-- ================= TAB: INFO ================= -->
+<section id="tab-info" class="hidden">
+
+  <!-- TRUST CERT (rendered dynamically) -->
+  <div class="cert-card">
+    <div class="cert-banner">TRUST · FAA RECREATIONAL UAS SAFETY TEST</div>
+    <dl id="certDl" style="margin: 0;">
+      <!-- populated by renderCert() -->
+    </dl>
+    <div style="font-size: 11.5px; color: var(--text-mute); margin-top: 12px; line-height: 1.5; font-family: var(--font-mono);">
+      Present on demand to FAA or law enforcement. This screen is your offline copy.
+    </div>
+    <button class="btn btn-ghost btn-small" style="margin-top: 12px;" onclick="openSetup()">EDIT PROFILE</button>
+  </div>
+
+  <!-- AIRCRAFT -->
+  <div class="cert-card" style="background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);">
+    <div class="cert-banner" style="color: var(--amber);">AIRCRAFT · SUB-250G CLASS</div>
+    <dl id="aircraftDl" style="margin: 0;">
+      <!-- populated by renderCert() -->
+    </dl>
+    <div style="font-size: 11.5px; color: var(--text-mute); margin-top: 12px; line-height: 1.5; font-family: var(--font-mono);">
+      Per 14 CFR Part 48, aircraft &lt;250 g flown recreationally do not require FAA registration. TRUST is still required.
+    </div>
+  </div>
+
+  <!-- QUICK REF: RULES -->
+  <div class="quickref">
+    <h3>Top Rules · § 44809 + FTCA</h3>
+    <ul>
+      <li><strong>Recreational only</strong> — no compensation, no work.</li>
+      <li><strong>VLOS</strong> — pilot or co-located VO maintains visual line of sight unaided.</li>
+      <li><strong>≤400 ft AGL</strong> in Class G uncontrolled airspace.</li>
+      <li><strong>Controlled airspace</strong> (B, C, D, E surface) — LAANC required.</li>
+      <li><strong>Yield to manned aircraft</strong> — always. Right of way is theirs.</li>
+      <li><strong>No flight over people</strong> directly.</li>
+      <li><strong>25 ft</strong> from other pilots · <strong>50 ft</strong> from spectators.</li>
+      <li><strong>FPV requires VO</strong> with VLOS.</li>
+      <li><strong>TRUST on demand</strong> — show to FAA / law enforcement.</li>
+    </ul>
+  </div>
+
+  <!-- QUICK REF: EMERGENCY -->
+  <div class="quickref">
+    <h3>Emergency · Incident</h3>
+    <ul>
+      <li><strong>Land immediately</strong> if a safe landing is possible.</li>
+      <li>If not, <strong>divert</strong> away from people, vehicles, structures.</li>
+      <li>Ensure everyone is safe · address injuries first.</li>
+      <li>Report to local FTCA representative.</li>
+      <li>Consider reporting to <strong>NASA sUAS ASRS</strong> at asrs.arc.nasa.gov/uassafety.html</li>
+      <li>Common triggers: lost link, instrument fail, weather, parts breaking, battery fire, unanticipated traffic.</li>
+    </ul>
+  </div>
+
+  <!-- QUICK REF: IMSAFE -->
+  <div class="quickref">
+    <h3>IMSAFE</h3>
+    <ul>
+      <li><strong>I</strong>llness · symptoms affecting ops?</li>
+      <li><strong>M</strong>edication · prescription or otherwise?</li>
+      <li><strong>S</strong>tress · psychological/emotional factors?</li>
+      <li><strong>A</strong>lcohol · none in last 8 hr (24 hr full metabolization).</li>
+      <li><strong>F</strong>atigue · adequate rest?</li>
+      <li><strong>E</strong>motion · emotionally upset?</li>
+    </ul>
+  </div>
+
+  <!-- LINKS -->
+  <div class="quickref">
+    <h3>Quick Links</h3>
+    <ul>
+      <li><a class="ext-link" href="https://avision.io/" target="_blank" rel="noopener">avision.io · B4UFLY portal</a></li>
+      <li><a class="ext-link" href="https://faadronezone.faa.gov/" target="_blank" rel="noopener">FAA Drone Zone</a></li>
+      <li><a class="ext-link" href="https://www.faa.gov/uas/recreational_flyers" target="_blank" rel="noopener">FAA Recreational Flyers</a></li>
+      <li><a class="ext-link" href="https://asrs.arc.nasa.gov/uassafety.html" target="_blank" rel="noopener">NASA sUAS ASRS · report incidents</a></li>
+    </ul>
+  </div>
+
+  <!-- DATA -->
+  <div class="quickref">
+    <h3>Data · Storage</h3>
+    <ul>
+      <li>All data is stored <strong>locally on this device</strong> only.</li>
+      <li>Non-incident flights auto-delete after <strong>10 days</strong>.</li>
+      <li>Incident flights retained until manually cleared.</li>
+      <li>Add this page to your <strong>home screen</strong> to use as an app.</li>
+    </ul>
+  </div>
+
+  <div class="footer-note">
+    PREFLIGHT v1 · single-file PWA · no network required after first load
+  </div>
+</section>
+
+</main>
+
+<!-- ============ SETUP WIZARD ============ -->
+<div class="modal-bg" id="setupModal">
+  <div class="wizard">
+    <div class="wizard-banner">PILOT SETUP</div>
+    <div class="wizard-body">
+      <p id="setupIntro">First-time setup. Your info stays on this device — nothing is sent anywhere.</p>
+      <div class="field">
+        <label>Pilot name *</label>
+        <input type="text" id="setupName" placeholder="Full name as on TRUST cert" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>TRUST authentication token *</label>
+        <input type="text" id="setupTrust" placeholder="e.g. UAVCxxxxxxxxxxx" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>TRUST issued by</label>
+        <input type="text" id="setupIssuer" placeholder="e.g. UAV Coach, Pilot Institute" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Aircraft / call sign (optional)</label>
+        <input type="text" id="setupAircraft" placeholder="e.g. Speed-001 fixed wing" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Aircraft class</label>
+        <select id="setupClass">
+          <option value="Fixed Wing <250 g">Fixed Wing &lt;250 g</option>
+          <option value="Multirotor <250 g">Multirotor &lt;250 g</option>
+          <option value="Fixed Wing <55 lb">Fixed Wing 250 g – 55 lb (FAA reg required)</option>
+          <option value="Multirotor <55 lb">Multirotor 250 g – 55 lb (FAA reg required)</option>
+        </select>
+      </div>
+      <div class="field" id="setupRegField" style="display:none">
+        <label>FAA registration number</label>
+        <input type="text" id="setupFaaReg" placeholder="e.g. FA3A93BNRX" autocomplete="off">
+      </div>
+    </div>
+    <div class="wizard-foot">
+      <button class="btn btn-ghost" onclick="closeModal('setupModal')" id="setupCancelBtn" style="display:none">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSetup()">SAVE PROFILE</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-bg" id="incidentModal">
+  <div class="modal">
+    <div class="modal-head">
+      Incident Report
+      <button class="close-x" onclick="closeModal('incidentModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert red" style="margin: 0 0 12px;">
+        Describe the incident. This flight will be flagged and retained indefinitely. You can export the full report from the LOG tab.
+      </div>
+      <div class="field" style="padding: 0;">
+        <label>Incident type</label>
+        <select id="incidentType">
+          <option value="">-- select --</option>
+          <option>Lost link / signal interference</option>
+          <option>Control surface or component failure</option>
+          <option>Battery / power issue</option>
+          <option>Crash / hard landing</option>
+          <option>Flyaway</option>
+          <option>Close call with manned aircraft</option>
+          <option>Bystander / property impact</option>
+          <option>Weather-induced loss of control</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field" style="padding: 12px 0 0;">
+        <label>Description</label>
+        <textarea id="incidentDesc" placeholder="what happened, sequence of events, outcome..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('incidentModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="saveIncident()">FLAG · CONTINUE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ END FLIGHT MODAL ============ -->
+<div class="modal-bg" id="endFlightModal">
+  <div class="modal">
+    <div class="modal-head">
+      End Flight
+      <button class="close-x" onclick="closeModal('endFlightModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="endIncidentBanner" class="alert red hidden" style="margin: 0 0 12px;">
+        <strong>Incident flagged.</strong> This flight will be retained beyond the 10-day rolling log.
+      </div>
+      <div class="field" style="padding: 0;">
+        <label>Duration</label>
+        <div style="font-family: var(--font-mono); font-size: 22px; color: var(--green);" id="endDuration">00:00:00</div>
+      </div>
+      <div class="field" style="padding: 12px 0 0;">
+        <label>Post-flight notes</label>
+        <textarea id="postNotes" placeholder="how did it go? anything to note? repairs needed?"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('endFlightModal')">Back</button>
+      <button class="btn btn-primary" onclick="commitFlight()">SAVE TO LOG</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONFIRM MODAL ============ -->
+<div class="modal-bg" id="confirmModal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-head">Confirm <button class="close-x" onclick="closeModal('confirmModal')">✕</button></div>
+    <div class="modal-body" id="confirmBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn btn-danger" id="confirmBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// =================== STATE ===================
+const STATE = {
+  flightActive: false,
+  flightStart: null,
+  flightIncident: false,
+  incidentData: null,
+  timer: null,
+  settings: null,
+  airspaceCheck: null  // last automated airspace check result
+};
+
+const LS_LOG = 'preflight.log.v1';
+const LS_DRAFT = 'preflight.draft.v1';
+const LS_SETTINGS = 'preflight.settings.v1';
+
+// FAA public airspace endpoints (CORS-enabled ArcGIS feature services).
+// These are the FAA's own authoritative data layers, used by LAANC providers.
+const FAA = {
+  uasfm: 'https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/FAA_UAS_FacilityMap_Data/FeatureServer/0/query',
+  nsufr: 'https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/National_Security_UAS_Flight_Restrictions_1/FeatureServer/0/query',
+  prohibited: 'https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/Prohibited_Areas/FeatureServer/0/query'
+};
+
+// =================== SETTINGS ===================
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(LS_SETTINGS);
+    if (raw) STATE.settings = JSON.parse(raw);
+  } catch (e) { STATE.settings = null; }
+}
+
+function saveSettings(s) {
+  STATE.settings = s;
+  try { localStorage.setItem(LS_SETTINGS, JSON.stringify(s)); } catch (e) {}
+}
+
+function renderCert() {
+  const s = STATE.settings || {};
+  const cert = document.getElementById('certDl');
+  if (cert) {
+    cert.innerHTML = `
+      <div class="cert-row"><dt>Holder</dt><dd>${esc(s.name || '—')}</dd></div>
+      <div class="cert-row"><dt>Auth Token</dt><dd class="green">${esc(s.trust || '—')}</dd></div>
+      <div class="cert-row"><dt>Issued by</dt><dd>${esc(s.issuer || '—')}</dd></div>
+      <div class="cert-row"><dt>Authority</dt><dd>49 U.S.C. § 44809(a)(7)</dd></div>
+    `;
+  }
+  const ac = document.getElementById('aircraftDl');
+  if (ac) {
+    const cls = s.aircraftClass || 'Fixed Wing <250 g';
+    const subTwoFifty = cls.includes('<250');
+    ac.innerHTML = `
+      <div class="cert-row"><dt>Class</dt><dd>${esc(cls)}</dd></div>
+      <div class="cert-row"><dt>Aircraft</dt><dd>${esc(s.aircraft || '—')}</dd></div>
+      <div class="cert-row"><dt>Reg required</dt><dd class="${subTwoFifty ? 'green' : ''}">${subTwoFifty ? 'NO' : 'YES'}</dd></div>
+      ${!subTwoFifty ? `<div class="cert-row"><dt>FAA reg</dt><dd class="green">${esc(s.faaReg || '—')}</dd></div>` : ''}
+      <div class="cert-row"><dt>Purpose</dt><dd>Recreational</dd></div>
+      <div class="cert-row"><dt>CBO</dt><dd>FTCA</dd></div>
+    `;
+  }
+  // Trust sub on the checklist
+  const ts = document.getElementById('trust-sub');
+  if (ts && s.trust) ts.textContent = s.trust + ' · view in INFO tab';
+}
+
+function openSetup() {
+  const s = STATE.settings || {};
+  document.getElementById('setupName').value = s.name || '';
+  document.getElementById('setupTrust').value = s.trust || '';
+  document.getElementById('setupIssuer').value = s.issuer || '';
+  document.getElementById('setupAircraft').value = s.aircraft || '';
+  document.getElementById('setupClass').value = s.aircraftClass || 'Fixed Wing <250 g';
+  document.getElementById('setupFaaReg').value = s.faaReg || '';
+  // Allow cancel only if settings already exist
+  document.getElementById('setupCancelBtn').style.display = STATE.settings ? '' : 'none';
+  document.getElementById('setupIntro').textContent = STATE.settings
+    ? 'Update your profile. Stored only on this device.'
+    : 'First-time setup. Your info stays on this device — nothing is sent anywhere.';
+  toggleRegField();
+  openModal('setupModal');
+}
+
+function toggleRegField() {
+  const v = document.getElementById('setupClass').value;
+  document.getElementById('setupRegField').style.display = v.includes('<250') ? 'none' : '';
+}
+
+function saveSetup() {
+  const name = document.getElementById('setupName').value.trim();
+  const trust = document.getElementById('setupTrust').value.trim();
+  if (!name || !trust) {
+    alert('Pilot name and TRUST token are required.');
+    return;
+  }
+  saveSettings({
+    name,
+    trust,
+    issuer: document.getElementById('setupIssuer').value.trim(),
+    aircraft: document.getElementById('setupAircraft').value.trim(),
+    aircraftClass: document.getElementById('setupClass').value,
+    faaReg: document.getElementById('setupFaaReg').value.trim()
+  });
+  renderCert();
+  closeModal('setupModal');
+}
+
+// =================== CLOCK ===================
+function tickClock() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  document.getElementById('clockLocal').textContent =
+    `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  document.getElementById('clockUtc').textContent =
+    `${p(d.getUTCHours())}:${p(d.getUTCMinutes())} Z`;
+}
+setInterval(tickClock, 1000); tickClock();
+
+// =================== TABS ===================
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => switchTab(t.dataset.tab));
+});
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === name);
+  });
+  ['preflight', 'flight', 'log', 'info'].forEach(n => {
+    document.getElementById('tab-' + n).classList.toggle('hidden', n !== name);
+  });
+  if (name === 'log') renderLog();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+// =================== PANELS ===================
+function togglePanel(head) {
+  const collapsed = head.dataset.collapsed === 'true';
+  head.dataset.collapsed = collapsed ? 'false' : 'true';
+}
+function expandAll() {
+  document.querySelectorAll('.panel-head').forEach(h => h.dataset.collapsed = 'false');
+}
+function collapseAll() {
+  document.querySelectorAll('.panel-head').forEach(h => h.dataset.collapsed = 'true');
+}
+
+// =================== CHECKLIST ===================
+function updateChecklist() {
+  let totalComplete = 0;
+  let requiredRemain = 0;
+  let criticalRemain = 0;
+  let allRequiredMet = true;
+
+  document.querySelectorAll('.panel[data-section]').forEach(panel => {
+    const checks = panel.querySelectorAll('.check input[type="checkbox"]');
+    const status = panel.querySelector('[data-status]');
+    let panelReqRemain = 0;
+    let panelCritRemain = 0;
+    let panelDone = 0;
+
+    checks.forEach(cb => {
+      const row = cb.closest('.check');
+      const req = row.classList.contains('required') || row.classList.contains('critical');
+      const crit = row.classList.contains('critical');
+      if (cb.checked) {
+        totalComplete++;
+        panelDone++;
+      } else {
+        if (req) { requiredRemain++; panelReqRemain++; allRequiredMet = false; }
+        if (crit) { criticalRemain++; panelCritRemain++; }
+      }
+    });
+
+    if (panelCritRemain > 0) {
+      status.textContent = 'CRIT';
+      status.className = 'panel-status fail';
+    } else if (panelReqRemain > 0) {
+      status.textContent = 'REQ';
+      status.className = 'panel-status warn';
+    } else if (panelDone > 0) {
+      status.textContent = 'OK';
+      status.className = 'panel-status ok';
+    } else {
+      status.textContent = 'PEND';
+      status.className = 'panel-status';
+    }
+  });
+
+  document.getElementById('stat-complete').textContent = totalComplete;
+  document.getElementById('stat-required').textContent = requiredRemain;
+  document.getElementById('stat-critical').textContent = criticalRemain;
+
+  const banner = document.getElementById('incomplete-banner');
+  banner.style.display = (requiredRemain > 0 || criticalRemain > 0) ? '' : 'none';
+
+  const beginBtn = document.getElementById('beginBtn');
+  beginBtn.disabled = !allRequiredMet;
+  beginBtn.textContent = allRequiredMet ? 'BEGIN FLIGHT' : `${requiredRemain} REQUIRED REMAINING`;
+
+  saveDraft();
+}
+
+document.addEventListener('change', e => {
+  if (e.target.matches('.check input[type="checkbox"]')) updateChecklist();
+  if (e.target && e.target.id === 'setupClass') toggleRegField();
+});
+
+// =================== DRAFT (auto-save preflight state) ===================
+function saveDraft() {
+  const checks = {};
+  document.querySelectorAll('.panel[data-section] .check input[type="checkbox"]').forEach((cb, i) => {
+    checks[i] = cb.checked;
+  });
+  const draft = {
+    checks,
+    preNotes: document.getElementById('preNotes').value,
+    ts: Date.now()
+  };
+  try { localStorage.setItem(LS_DRAFT, JSON.stringify(draft)); } catch (e) {}
+}
+
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(LS_DRAFT);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    // Draft expires after 12 hours
+    if (Date.now() - (draft.ts || 0) > 12 * 3600 * 1000) {
+      localStorage.removeItem(LS_DRAFT);
+      return;
+    }
+    document.querySelectorAll('.panel[data-section] .check input[type="checkbox"]').forEach((cb, i) => {
+      if (draft.checks && draft.checks[i] === true) cb.checked = true;
+    });
+    document.getElementById('preNotes').value = draft.preNotes || '';
+  } catch (e) {}
+}
+
+document.getElementById('preNotes').addEventListener('input', saveDraft);
+
+function resetChecklist() {
+  document.querySelectorAll('.panel[data-section] .check input[type="checkbox"]').forEach(cb => {
+    cb.checked = false;
+  });
+  // Re-check the always-true TRUST doc box (it's pre-checked by default)
+  const trustBox = document.querySelector('[data-section="docs"] .check input');
+  if (trustBox) trustBox.checked = true;
+  document.getElementById('preNotes').value = '';
+  STATE.airspaceCheck = null;
+  resetAirspaceCheckUI();
+  localStorage.removeItem(LS_DRAFT);
+  updateChecklist();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetAirspaceCheckUI() {
+  const body = document.getElementById('acBody');
+  if (!body) return;
+  body.innerHTML = `<button class="btn btn-primary" onclick="runAirspaceCheck()" id="acRunBtn">▶ RUN AIRSPACE CHECK</button>`;
+}
+
+// =================== AVISION LAUNCHER ===================
+// Try to open the installed Avision app, fall back to web.
+// Android: intent:// URL with com.avision package + Play Store fallback.
+// iOS: tries the universal link (Avision iOS app uses HTTPS deep links — iOS will route to the app if installed, else Safari).
+function openAvision(e) {
+  if (e) e.preventDefault();
+  const ua = navigator.userAgent || '';
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+  if (isAndroid) {
+    // Android intent URL: opens com.avision if installed, else Play Store
+    const intent = 'intent://avision.io/#Intent;scheme=https;package=com.avision;S.browser_fallback_url=' +
+      encodeURIComponent('https://play.google.com/store/apps/details?id=com.avision') + ';end';
+    window.location.href = intent;
+    return;
+  }
+
+  if (isIOS) {
+    // iOS: try the universal link first. If app installed, iOS routes to it. Otherwise Safari opens the page.
+    // We can also try a custom scheme as a soft attempt.
+    const tryScheme = setTimeout(() => {
+      window.open('https://avision.io/', '_blank');
+    }, 250);
+    // Many drone apps use a custom scheme; avision's isn't publicly documented, so we just open the universal link.
+    clearTimeout(tryScheme);
+    window.open('https://avision.io/', '_blank');
+    return;
+  }
+
+  // Desktop / unknown: open the website
+  window.open('https://avision.io/', '_blank');
+}
+
+
+async function queryFAA(endpoint, lon, lat) {
+  const params = new URLSearchParams({
+    where: '1=1',
+    geometry: lon + ',' + lat,
+    geometryType: 'esriGeometryPoint',
+    inSR: '4326',
+    spatialRel: 'esriSpatialRelIntersects',
+    outFields: '*',
+    returnGeometry: 'false',
+    f: 'json'
+  });
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(endpoint + '?' + params, { method: 'GET', signal: ctrl.signal });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+function setStep(steps, id, status) {
+  const idx = steps.findIndex(s => s.id === id);
+  if (idx >= 0) steps[idx].status = status;
+  renderSteps(steps);
+}
+
+function renderSteps(steps) {
+  const body = document.getElementById('acBody');
+  body.innerHTML = steps.map(s => {
+    const cls = s.status === 'done' ? 'done' : s.status === 'fail' ? 'fail' : s.status === 'spin' ? 'spin' : '';
+    return `<div class="ac-step ${cls}"><span class="ac-dot"></span>${esc(s.label)}</div>`;
+  }).join('');
+}
+
+async function runAirspaceCheck() {
+  const body = document.getElementById('acBody');
+  const steps = [
+    { id: 'gps', label: 'Acquiring GPS fix...', status: 'spin' },
+    { id: 'uasfm', label: 'Querying FAA UAS Facility Map...', status: '' },
+    { id: 'nsufr', label: 'Checking National Security UAS zones...', status: '' },
+    { id: 'verdict', label: 'Computing verdict...', status: '' }
+  ];
+  renderSteps(steps);
+
+  // --- 1. Geolocation ---
+  if (!navigator.geolocation) {
+    showAirspaceFail('Geolocation not supported on this device.');
+    return;
+  }
+  let pos;
+  try {
+    pos = await new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 60000
+      });
+    });
+  } catch (e) {
+    setStep(steps, 'gps', 'fail');
+    showAirspaceFail(
+      e.code === 1 ? 'Location permission denied. Enable location services and retry.'
+      : e.code === 2 ? 'Position unavailable. Move to an area with GPS signal and retry.'
+      : e.code === 3 ? 'GPS timed out. Retry in open sky.'
+      : ('Location error: ' + (e.message || e.code))
+    );
+    return;
+  }
+  setStep(steps, 'gps', 'done');
+  const lat = pos.coords.latitude;
+  const lon = pos.coords.longitude;
+  const acc = pos.coords.accuracy;
+  steps[0].label = `GPS: ${lat.toFixed(5)}, ${lon.toFixed(5)} (±${Math.round(acc)} m)`;
+
+  // --- 2. UAS Facility Map (controlled airspace) ---
+  setStep(steps, 'uasfm', 'spin');
+  let uasfm, nsufr;
+  try {
+    uasfm = await queryFAA(FAA.uasfm, lon, lat);
+    setStep(steps, 'uasfm', 'done');
+  } catch (e) {
+    setStep(steps, 'uasfm', 'fail');
+    showAirspaceFail('FAA UAS Facility Map unreachable: ' + (e.message || 'network error') +
+      '. If you opened this file directly, host it on GitHub Pages to enable network checks.');
+    return;
+  }
+
+  // --- 3. NSUFR (National Security UAS Flight Restrictions) ---
+  setStep(steps, 'nsufr', 'spin');
+  try {
+    nsufr = await queryFAA(FAA.nsufr, lon, lat);
+    setStep(steps, 'nsufr', 'done');
+  } catch (e) {
+    // Non-fatal — treat NSUFR as advisory but warn
+    nsufr = { features: [], _error: e.message };
+    setStep(steps, 'nsufr', 'fail');
+  }
+
+  // --- 4. Verdict ---
+  setStep(steps, 'verdict', 'spin');
+  const uasfmFeatures = (uasfm && uasfm.features) || [];
+  const nsufrFeatures = (nsufr && nsufr.features) || [];
+
+  const inControlled = uasfmFeatures.length > 0;
+  const inNSUFR = nsufrFeatures.length > 0;
+  let ceiling = null;
+  let apt = null;
+  if (inControlled) {
+    const ceilings = uasfmFeatures
+      .map(f => (f.attributes && (f.attributes.CEILING ?? f.attributes.ceiling)) || 0)
+      .filter(c => typeof c === 'number');
+    if (ceilings.length) ceiling = Math.min(...ceilings.filter(c => c > 0).concat([Infinity]));
+    if (ceiling === Infinity) ceiling = Math.max(...ceilings);
+    apt = uasfmFeatures[0].attributes && (uasfmFeatures[0].attributes.APT1 || uasfmFeatures[0].attributes.ARPT_Name || 'controlled');
+  }
+
+  let verdictClass, verdictHead, verdictBody;
+  if (inNSUFR) {
+    verdictClass = 'fail';
+    verdictHead = 'NO-GO · National Security Zone';
+    verdictBody = 'This location is inside a National Security UAS Flight Restriction. Flight prohibited from 0 – 400 ft AGL without special authorization.';
+  } else if (inControlled) {
+    verdictClass = 'warn';
+    verdictHead = 'LAANC REQUIRED · Controlled Airspace';
+    verdictBody = `Inside controlled airspace${apt ? ' (' + apt + ')' : ''}. Maximum advisory altitude: <strong>${ceiling ?? 0} ft AGL</strong>. You must obtain LAANC authorization via Avision before flight.`;
+  } else {
+    verdictClass = 'pass';
+    verdictHead = 'GO · Class G Uncontrolled';
+    verdictBody = 'No controlled airspace, no NSUFR overlap. You may fly recreationally below 400 ft AGL. Always verify TFRs via Avision before launch — TFRs change minute-to-minute and are not part of this automated check.';
+  }
+  setStep(steps, 'verdict', 'done');
+
+  // --- 5. Build audit record ---
+  STATE.airspaceCheck = {
+    timestamp: new Date().toISOString(),
+    coords: { lat, lon, accuracy: acc },
+    verdict: verdictHead,
+    verdictClass,
+    inControlled,
+    inNSUFR,
+    ceiling,
+    uasfmFeatureCount: uasfmFeatures.length,
+    nsufrFeatureCount: nsufrFeatures.length,
+    uasfmRaw: uasfm,
+    nsufrRaw: nsufr
+  };
+
+  // --- 6. Render verdict card ---
+  const ts = new Date();
+  body.innerHTML = `
+    <div class="ac-verdict ${verdictClass}">
+      <div class="ac-verdict-head">${verdictHead}</div>
+      <div>${verdictBody}</div>
+      <dl>
+        <dt>GPS fix</dt><dd>${lat.toFixed(5)}°, ${lon.toFixed(5)}° (±${Math.round(acc)} m)</dd>
+        <dt>FAA UAS Facility Map</dt><dd>${uasfmFeatures.length} feature${uasfmFeatures.length === 1 ? '' : 's'} intersect ${apt ? '· ' + esc(apt) : ''}</dd>
+        <dt>NSUFR</dt><dd>${inNSUFR ? 'INSIDE national security zone' : 'no overlap'}${nsufr && nsufr._error ? ' (advisory failed: ' + esc(nsufr._error) + ')' : ''}</dd>
+        ${ceiling !== null ? `<dt>Advisory ceiling</dt><dd>${ceiling} ft AGL</dd>` : ''}
+      </dl>
+      <div class="timestamp">Verified ${ts.toISOString().slice(0,19).replace('T',' ')}Z · bound to next flight record</div>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:10px;">
+      <button class="btn btn-ghost btn-small" onclick="runAirspaceCheck()">RE-RUN</button>
+      ${verdictClass !== 'pass' ? '<a class="btn btn-warn btn-small" href="https://avision.io/" target="_blank" rel="noopener" onclick="openAvision(event)" style="flex:1;text-decoration:none;">Open Avision · LAANC</a>' : ''}
+    </div>
+  `;
+
+  // --- 7. Auto-tick airspace gate boxes only on PASS ---
+  const clearBox = document.querySelector('.check[data-auto="airspaceClear"] input');
+  const classGBox = document.querySelector('.check[data-auto="classG"] input');
+  if (clearBox) clearBox.checked = (verdictClass === 'pass');
+  if (classGBox) classGBox.checked = (verdictClass === 'pass');
+  updateChecklist();
+}
+
+function showAirspaceFail(msg) {
+  const body = document.getElementById('acBody');
+  body.innerHTML = `
+    <div class="ac-verdict fail">
+      <div class="ac-verdict-head">CHECK FAILED</div>
+      <div>${esc(msg)}</div>
+    </div>
+    <button class="btn btn-ghost btn-small" style="margin-top:10px;" onclick="runAirspaceCheck()">RETRY</button>
+  `;
+  STATE.airspaceCheck = null;
+  // ensure the auto boxes stay unchecked
+  const clearBox = document.querySelector('.check[data-auto="airspaceClear"] input');
+  const classGBox = document.querySelector('.check[data-auto="classG"] input');
+  if (clearBox) clearBox.checked = false;
+  if (classGBox) classGBox.checked = false;
+  updateChecklist();
+}
+
+// =================== FLIGHT ===================
+function beginFlight() {
+  STATE.flightActive = true;
+  STATE.flightStart = Date.now();
+  STATE.flightIncident = false;
+  STATE.incidentData = null;
+
+  persistActiveFlight();
+  enterFlightUI();
+  switchTab('flight');
+}
+
+function enterFlightUI() {
+  document.getElementById('flight-pre').classList.add('hidden');
+  document.getElementById('flight-active').classList.remove('hidden');
+
+  const t = new Date(STATE.flightStart);
+  document.getElementById('flightStarted').textContent =
+    String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
+
+  // show active dot in flight tab
+  const flightTab = document.querySelector('[data-tab="flight"]');
+  if (flightTab && !flightTab.querySelector('.tab-dot')) {
+    flightTab.insertAdjacentHTML('beforeend', ' <span class="tab-dot"></span>');
+  }
+
+  // Apply incident visual if previously declared
+  if (STATE.flightIncident) {
+    const hero = document.querySelector('.flight-hero');
+    if (hero) hero.style.borderColor = 'var(--red-dim)';
+    const ft = document.querySelector('.flight-time');
+    if (ft) ft.style.color = 'var(--red)';
+  }
+
+  if (STATE.timer) clearInterval(STATE.timer);
+  STATE.timer = setInterval(updateFlightTime, 1000);
+  updateFlightTime();
+}
+
+// Persist active flight to localStorage so it survives tab eviction / phone sleep
+function persistActiveFlight() {
+  try {
+    if (STATE.flightActive) {
+      localStorage.setItem('preflight.active.v1', JSON.stringify({
+        flightStart: STATE.flightStart,
+        flightIncident: STATE.flightIncident,
+        incidentData: STATE.incidentData,
+        airspaceCheck: STATE.airspaceCheck,
+        preNotes: document.getElementById('preNotes') ? document.getElementById('preNotes').value : '',
+        savedAt: Date.now()
+      }));
+    } else {
+      localStorage.removeItem('preflight.active.v1');
+    }
+  } catch (e) {}
+}
+
+function restoreActiveFlight() {
+  try {
+    const raw = localStorage.getItem('preflight.active.v1');
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    // If flight is suspiciously old (>12h), clear it — likely abandoned
+    if (Date.now() - data.flightStart > 12 * 3600 * 1000) {
+      localStorage.removeItem('preflight.active.v1');
+      return false;
+    }
+    STATE.flightActive = true;
+    STATE.flightStart = data.flightStart;
+    STATE.flightIncident = !!data.flightIncident;
+    STATE.incidentData = data.incidentData || null;
+    STATE.airspaceCheck = data.airspaceCheck || null;
+    enterFlightUI();
+    const banner = document.getElementById('restoredBanner');
+    if (banner) banner.classList.remove('hidden');
+    switchTab('flight');
+    return true;
+  } catch (e) { return false; }
+}
+
+function updateFlightTime() {
+  if (!STATE.flightStart) return;
+  const ms = Date.now() - STATE.flightStart;
+  const s = Math.floor(ms/1000);
+  const h = String(Math.floor(s/3600)).padStart(2,'0');
+  const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const sec = String(s%60).padStart(2,'0');
+  document.getElementById('flightTime').textContent = `${h}:${m}:${sec}`;
+  // Lightweight liveness ping every 30s so persisted state stays fresh
+  if (s % 30 === 0) persistActiveFlight();
+}
+
+function declareIncident() {
+  openModal('incidentModal');
+}
+
+function saveIncident() {
+  const type = document.getElementById('incidentType').value;
+  const desc = document.getElementById('incidentDesc').value;
+  if (!type) {
+    alert('Please select an incident type.');
+    return;
+  }
+  STATE.flightIncident = true;
+  STATE.incidentData = { type, desc, ts: Date.now() };
+  persistActiveFlight();
+  closeModal('incidentModal');
+
+  // Visual marker
+  const hero = document.querySelector('.flight-hero');
+  hero.style.borderColor = 'var(--red-dim)';
+  document.querySelector('.flight-time').style.color = 'var(--red)';
+}
+
+function endFlight() {
+  if (STATE.timer) clearInterval(STATE.timer);
+  // compute duration
+  const ms = Date.now() - STATE.flightStart;
+  const s = Math.floor(ms/1000);
+  const h = String(Math.floor(s/3600)).padStart(2,'0');
+  const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const sec = String(s%60).padStart(2,'0');
+  document.getElementById('endDuration').textContent = `${h}:${m}:${sec}`;
+  document.getElementById('endIncidentBanner').classList.toggle('hidden', !STATE.flightIncident);
+  document.getElementById('postNotes').value = '';
+  openModal('endFlightModal');
+}
+
+function commitFlight() {
+  // Snapshot checklist state
+  const checks = [];
+  document.querySelectorAll('.panel[data-section]').forEach(panel => {
+    const section = panel.dataset.section;
+    const items = [];
+    panel.querySelectorAll('.check').forEach(row => {
+      const label = row.querySelector('.check-label').childNodes[0].textContent.trim();
+      const checked = row.querySelector('input').checked;
+      const req = row.classList.contains('required') || row.classList.contains('critical');
+      items.push({ label, checked, required: req });
+    });
+    checks.push({ section, items });
+  });
+
+  const s = STATE.settings || {};
+  const record = {
+    id: 'F-' + Date.now().toString(36).toUpperCase(),
+    start: STATE.flightStart,
+    end: Date.now(),
+    durationMs: Date.now() - STATE.flightStart,
+    incident: STATE.flightIncident,
+    incidentData: STATE.incidentData,
+    preNotes: document.getElementById('preNotes').value,
+    postNotes: document.getElementById('postNotes').value,
+    checks,
+    airspaceCheck: STATE.airspaceCheck,   // FAA audit data, may be null
+    pilot: s.name || 'unknown',
+    trust: s.trust || 'unknown',
+    issuer: s.issuer || '',
+    aircraft: s.aircraft || '',
+    aircraftClass: s.aircraftClass || 'Fixed Wing <250g',
+    faaReg: s.faaReg || ''
+  };
+
+  const log = loadLog();
+  log.push(record);
+  saveLog(log);
+
+  // Reset flight state
+  STATE.flightActive = false;
+  STATE.flightStart = null;
+  STATE.flightIncident = false;
+  STATE.incidentData = null;
+  persistActiveFlight();  // clears localStorage since flightActive is now false
+
+  document.querySelector('.flight-hero').style.borderColor = '';
+  document.querySelector('.flight-time').style.color = '';
+  document.getElementById('flight-active').classList.add('hidden');
+  document.getElementById('flight-pre').classList.remove('hidden');
+
+  const dot = document.querySelector('[data-tab="flight"] .tab-dot');
+  if (dot) dot.remove();
+
+  closeModal('endFlightModal');
+
+  // Reset checklist for next flight
+  resetChecklist();
+
+  // If incident, prompt to export
+  if (record.incident) {
+    setTimeout(() => {
+      if (confirm('Incident flight saved. Export the report now as evidence?')) {
+        exportFlight(record.id);
+      }
+      switchTab('log');
+    }, 300);
+  } else {
+    switchTab('log');
+  }
+}
+
+// =================== LOG ===================
+function loadLog() {
+  try {
+    const raw = localStorage.getItem(LS_LOG);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+
+function saveLog(log) {
+  try { localStorage.setItem(LS_LOG, JSON.stringify(log)); } catch (e) { alert('Storage error: ' + e.message); }
+}
+
+function purgeOldLog() {
+  const cutoff = Date.now() - 10 * 24 * 3600 * 1000;
+  const log = loadLog();
+  const kept = log.filter(r => r.incident || r.end > cutoff);
+  if (kept.length !== log.length) saveLog(kept);
+  return kept;
+}
+
+function renderLog() {
+  const log = purgeOldLog();
+  const list = document.getElementById('log-list');
+
+  // Stats
+  document.getElementById('log-stat-total').textContent = log.length;
+  const totalMin = Math.round(log.reduce((a,r) => a + r.durationMs, 0) / 60000);
+  document.getElementById('log-stat-hours').textContent = totalMin;
+  const incidents = log.filter(r => r.incident).length;
+  document.getElementById('log-stat-incidents').textContent = incidents;
+
+  if (log.length === 0) {
+    list.innerHTML = '<div class="log-empty">NO FLIGHTS LOGGED</div>';
+    return;
+  }
+
+  // Sort newest first
+  const sorted = [...log].sort((a,b) => b.start - a.start);
+  list.innerHTML = sorted.map(r => renderLogItem(r)).join('');
+}
+
+function renderLogItem(r) {
+  const d = new Date(r.start);
+  const dateStr = d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+  const timeStr = d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+  const dur = formatDuration(r.durationMs);
+  const tag = r.incident
+    ? '<span class="log-tag incident">INCIDENT</span>'
+    : '<span class="log-tag ok">OK</span>';
+
+  const checksHtml = r.checks.map(sec => {
+    const total = sec.items.length;
+    const checked = sec.items.filter(i => i.checked).length;
+    return `<dt>${sec.section.toUpperCase()}</dt><dd>${checked}/${total} items checked</dd>`;
+  }).join('');
+
+  const incidentHtml = r.incident && r.incidentData ? `
+    <dt>Incident type</dt><dd>${esc(r.incidentData.type)}</dd>
+    <dt>Description</dt><dd>${esc(r.incidentData.desc || '—')}</dd>
+  ` : '';
+
+  const ac = r.airspaceCheck;
+  const acHtml = ac ? `
+    <dt>FAA airspace check</dt>
+    <dd style="color: ${ac.verdictClass === 'pass' ? 'var(--green)' : ac.verdictClass === 'warn' ? 'var(--amber)' : 'var(--red)'};">
+      ${esc(ac.verdict)}
+    </dd>
+    <dt>Position</dt><dd>${ac.coords.lat.toFixed(5)}°, ${ac.coords.lon.toFixed(5)}° (±${Math.round(ac.coords.accuracy)}m)</dd>
+    <dt>Verified at</dt><dd>${esc(ac.timestamp)}</dd>
+    ${ac.ceiling != null ? `<dt>Advisory ceiling</dt><dd>${ac.ceiling} ft AGL</dd>` : ''}
+  ` : `<dt>FAA airspace check</dt><dd style="color: var(--amber);">not run · manual override</dd>`;
+
+  return `
+    <div class="log-item ${r.incident ? 'incident' : ''}">
+      <div class="log-item-head" onclick="toggleLogItem(this)">
+        ${tag}
+        <div class="log-meta">
+          <span class="log-date">${dateStr}</span> · ${timeStr} · <strong>${dur}</strong>
+        </div>
+        <span class="panel-chev">▾</span>
+      </div>
+      <div class="log-detail" style="display:none">
+        <dl style="margin:0">
+          <dt>Flight ID</dt><dd>${r.id}</dd>
+          <dt>Duration</dt><dd>${dur}</dd>
+          <dt>Start</dt><dd>${new Date(r.start).toLocaleString()}</dd>
+          <dt>End</dt><dd>${new Date(r.end).toLocaleString()}</dd>
+          ${incidentHtml}
+          ${acHtml}
+          <dt>Pre-flight notes</dt><dd>${esc(r.preNotes) || '—'}</dd>
+          <dt>Post-flight notes</dt><dd>${esc(r.postNotes) || '—'}</dd>
+          ${checksHtml}
+        </dl>
+        <div class="actions">
+          <button class="btn btn-ghost btn-small" onclick="exportFlight('${r.id}')">EXPORT</button>
+          <button class="btn btn-ghost btn-small" onclick="deleteFlight('${r.id}')">DELETE</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleLogItem(head) {
+  const detail = head.nextElementSibling;
+  detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+}
+
+function formatDuration(ms) {
+  const s = Math.floor(ms/1000);
+  const h = Math.floor(s/3600);
+  const m = Math.floor((s%3600)/60);
+  const sec = s%60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// =================== EXPORT ===================
+function exportFlight(id) {
+  const log = loadLog();
+  const r = log.find(x => x.id === id);
+  if (!r) return;
+  const blob = new Blob([JSON.stringify(r, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const tag = r.incident ? 'INCIDENT' : 'flight';
+  a.download = `${tag}_${r.id}_${new Date(r.start).toISOString().slice(0,10)}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function exportAll() {
+  const log = loadLog();
+  if (log.length === 0) { alert('No flights to export.'); return; }
+  const s = STATE.settings || {};
+  const bundle = {
+    exported: new Date().toISOString(),
+    pilot: s.name || 'unknown',
+    trust: s.trust || 'unknown',
+    issuer: s.issuer || '',
+    flights: log
+  };
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `preflight_logbook_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function deleteFlight(id) {
+  showConfirm('Delete this flight from the log? This cannot be undone.', () => {
+    const log = loadLog().filter(r => r.id !== id);
+    saveLog(log);
+    renderLog();
+  });
+}
+
+function confirmClearLog() {
+  showConfirm('Clear all NON-INCIDENT flights from the log? Incident flights will be retained.', () => {
+    const log = loadLog().filter(r => r.incident);
+    saveLog(log);
+    renderLog();
+  });
+}
+
+// =================== MODAL ===================
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function showConfirm(msg, action) {
+  document.getElementById('confirmBody').textContent = msg;
+  const btn = document.getElementById('confirmBtn');
+  btn.onclick = () => { action(); closeModal('confirmModal'); };
+  openModal('confirmModal');
+}
+
+// =================== BRAND TAP -> INFO ===================
+document.getElementById('brandTap').addEventListener('click', () => switchTab('info'));
+
+// =================== INIT ===================
+loadSettings();
+renderCert();
+loadDraft();
+updateChecklist();
+purgeOldLog();
+
+// Restore active flight if the page was reloaded mid-flight (tab eviction, phone sleep, etc.)
+const restored = restoreActiveFlight();
+
+// First-run setup (don't pop over a restored flight)
+if (!restored && (!STATE.settings || !STATE.settings.name || !STATE.settings.trust)) {
+  setTimeout(openSetup, 200);
+}
+
+// Persist active flight aggressively — when tab is hidden, before unload, on visibility change
+document.addEventListener('visibilitychange', () => {
+  if (STATE.flightActive) persistActiveFlight();
+});
+window.addEventListener('pagehide', () => {
+  if (STATE.flightActive) persistActiveFlight();
+});
+
+// Prevent accidental navigation away during active flight
+window.addEventListener('beforeunload', e => {
+  if (STATE.flightActive) {
+    persistActiveFlight();
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+</script>
+</body>
+</html>
